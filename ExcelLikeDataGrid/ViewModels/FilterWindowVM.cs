@@ -24,8 +24,7 @@ namespace ExcelLikeDataGrid.ViewModel
         [ObservableProperty]
         public List<string> _conjunctions = new(Enum.GetValues(typeof(ConjunctionsEnum)).Cast<ConjunctionsEnum>().Select(e => e.ToString()).ToList());
 
-        [ObservableProperty]
-        ObservableCollection<FilterCondition> _FilterConditions;
+        ObservableCollection<FilterCondition> FilterConditions;
 
         public ObservableCollection<ObservableCollection<FilterCondition>> ColumnFilterConditions;
 
@@ -97,11 +96,8 @@ namespace ExcelLikeDataGrid.ViewModel
             //make first item have no conjunction
             if (FilterConditions.Count > 0)
             {
-                FilterCondition firstCondition = (FilterCondition)filterListView.Items[0];
-                FilterConditions.Remove(firstCondition);
-                firstCondition.Conjunction = null;
-                firstCondition.HasConjunction = false;
-                FilterConditions.Add(firstCondition);
+                FilterConditions[0].Conjunction = null;
+                FilterConditions[0].HasConjunction = false;
             }
         }
 
