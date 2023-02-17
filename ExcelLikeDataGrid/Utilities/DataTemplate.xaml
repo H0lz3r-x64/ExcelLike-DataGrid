@@ -1,0 +1,10 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:ExcelLikeDataGrid.ViewModel"
+                    xmlns:view="clr-namespace:ExcelLikeDataGrid.View">
+
+    <DataTemplate DataType="{x:Type vm:FilterWindowVM}">
+        <view:FilterWindow />
+    </DataTemplate>
+
+</ResourceDictionary>

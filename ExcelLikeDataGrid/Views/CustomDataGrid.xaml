@@ -1,0 +1,588 @@
+﻿<UserControl x:Class="ExcelLikeDataGrid.View.CustomDataGrid"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:ExcelLikeDataGrid.View"
+             xmlns:themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Royale"
+             xmlns:sb="clr-namespace:SplitButtonControl;assembly=SplitButton"
+             xmlns:util="clr-namespace:ExcelLikeDataGrid.Utilities"
+             xmlns:vm="clr-namespace:ExcelLikeDataGrid.ViewModel"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="800"
+             x:Name="cstmDataGrid">
+
+    <UserControl.Resources>
+        
+        <!--#region misc.-->
+        <ItemsPanelTemplate x:Key="MenuItemPanelTemplate">
+            <StackPanel Margin="-30,0,0,0"
+                        Background="White" />
+        </ItemsPanelTemplate>
+
+        <!--override style for menuitems-->
+        <Style TargetType="{x:Type MenuItem}">
+            <Setter Property="ItemsPanel"
+                    Value="{StaticResource MenuItemPanelTemplate}" />
+        </Style>
+
+        <!--proxy-->
+        <util:BindingProxy x:Key="Proxy"
+                           Data="{Binding}" />
+
+        <!--#region Buttons-->
+
+        <Style x:Key="ExcelLikeButtonStyle"
+               TargetType="Button">
+            <Setter Property="Background"
+                    Value="#FFFFFF" />
+            <Setter Property="BorderBrush"
+                    Value="#707070" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+            <Setter Property="Foreground"
+                    Value="Black" />
+            <Setter Property="Padding"
+                    Value="10,3" />
+            <Setter Property="FontWeight"
+                    Value="Medium" />
+            <Setter Property="HorizontalAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalAlignment"
+                    Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+                    <Setter Property="BorderBrush"
+                            Value="LightBlue" />
+                </Trigger>
+                <Trigger Property="IsPressed"
+                         Value="True">
+                    <Setter Property="BorderBrush"
+                            Value="DeepSkyBlue" />
+                </Trigger>
+                <Trigger Property="IsEnabled"
+                         Value="False">
+                    <Setter Property="BorderBrush"
+                            Value="Gray" />
+                    <Setter Property="Foreground"
+                            Value="Gray" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="FilterButton"
+               TargetType="{x:Type Button}">
+            <Setter Property="SnapsToDevicePixels"
+                    Value="True" />
+            <Setter Property="OverridesDefaultStyle"
+                    Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid Name="grid"
+                              HorizontalAlignment="Right">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--#endregion-->
+
+        <!--#region Context Menu-->
+
+        <Style x:Key="ContextMenuStyle"
+               TargetType="{x:Type ContextMenu}">
+            <Setter Property="SnapsToDevicePixels"
+                    Value="True" />
+            <Setter Property="Grid.IsSharedSizeScope"
+                    Value="true" />
+            <Setter Property="HasDropShadow"
+                    Value="True" />
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ContextMenu}">
+
+                        <Border x:Name="Border"
+                                Background="WhiteSmoke"
+                                BorderThickness="1">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="Black" />
+                            </Border.BorderBrush>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="100" />
+                                    <RowDefinition Height="30" />
+                                </Grid.RowDefinitions>
+                                <!--Places Menu Items here-->
+                                <StackPanel Grid.Row="0"
+                                            IsItemsHost="True"
+                                            KeyboardNavigation.DirectionalNavigation="Cycle" />
+
+                                <!--Places Custom Context here-->
+                                <Grid Grid.Row="1"
+                                      IsItemsHost="False"
+                                      Background="White"
+                                      Margin="10">
+                                    <Border BorderBrush="Black"
+                                            CornerRadius="5"
+                                            BorderThickness="1" />
+
+                                    <ListView SelectionMode="Single"
+                                              ItemsSource="{Binding QuickFilterData}"
+                                              DataContext="{Binding Data, Source={StaticResource Proxy}}">
+
+                                        <ListView.ItemContainerStyle>
+                                            <Style TargetType="{x:Type ListViewItem}">
+                                                <Setter Property="HorizontalContentAlignment"
+                                                        Value="Stretch" />
+                                                <EventSetter Event="PreviewMouseLeftButtonDown"
+                                                             Handler="QuickFilterListViewItem_PreviewMouseLeftButtonDown" />
+                                                <Setter Property="IsEnabled"
+                                                        Value="{Binding IsEnabled}" />
+                                            </Style>
+
+                                        </ListView.ItemContainerStyle>
+
+                                        <ListView.View>
+                                            <GridView AllowsColumnReorder="False">
+                                                <!--style-->
+
+                                                <GridView.ColumnHeaderContainerStyle>
+                                                    <Style TargetType="GridViewColumnHeader">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                    </Style>
+                                                </GridView.ColumnHeaderContainerStyle>
+                                                <!--col1-->
+                                                <GridViewColumn x:Name="col1">
+                                                    <GridViewColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox IsChecked="{Binding IsChecked}"
+                                                                      IsHitTestVisible="False" />
+                                                        </DataTemplate>
+                                                    </GridViewColumn.CellTemplate>
+
+                                                </GridViewColumn>
+                                                <!--col2-->
+                                                <GridViewColumn Width="{Binding ActualWidth, ElementName=helperField}">
+                                                    <GridViewColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding Name}" />
+                                                        </DataTemplate>
+                                                    </GridViewColumn.CellTemplate>
+                                                </GridViewColumn>
+                                            </GridView>
+                                        </ListView.View>
+                                    </ListView>
+
+                                    <!--Hack to make ListView.GridViewColumn automatically fill extra space, since Width="*" is not allowed-->
+                                    <!--hidden helper Grid which does resizing -->
+                                    <Grid Visibility="Hidden">
+                                        <Grid.ColumnDefinitions>
+                                            <!--Width is bound to width of the first GridViewColumn -->
+                                            <ColumnDefinition Width="{Binding ActualWidth, ElementName=col1}" />
+                                            <!--Width is set to "Fill"-->
+                                            <ColumnDefinition Width="*" />
+                                            <!--Correction Width + 17 from the vertical scrollbar-->
+                                            <ColumnDefinition Width="27" />
+                                        </Grid.ColumnDefinitions>
+                                        <!--This is the hidden helper Field which is used to bind to, using the "Fill" column of the helper grid-->
+                                        <Grid Grid.Column="1"
+                                              Name="helperField" />
+                                    </Grid>
+                                </Grid>
+
+                                <StackPanel Grid.Row="2"
+                                            HorizontalAlignment="Right"
+                                            Orientation="Horizontal">
+                                    <Button Content="Ok"
+                                            IsEnabled="{Binding Data.IsQuickFilterValid, Source={StaticResource Proxy}}"
+                                            Style="{StaticResource ExcelLikeButtonStyle}"
+                                            Margin="0,0,10,0"
+                                            Height="25"
+                                            Width="35"
+                                            Click="Btn_ContextMenuOk" />
+                                    <Button Content="Cancel"
+                                            Style="{StaticResource ExcelLikeButtonStyle}"
+                                            Margin="0,0,10,0"
+                                            Height="25"
+                                            Width="50"
+                                            Click="Btn_ContextMenuCancel" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasDropShadow"
+                                     Value="true">
+                                <Setter TargetName="Border"
+                                        Property="Padding"
+                                        Value="0,3,0,3" />
+                                <Setter TargetName="Border"
+                                        Property="CornerRadius"
+                                        Value="4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--#endregion-->
+
+        <!--#endregion-->
+
+        <!--#region DataGrid-->
+
+        <!--#region Column Styles-->
+
+        <!--#region Gripper-->
+
+        <Style x:Key="ColumnHeaderGripperStyle"
+               TargetType="{x:Type Thumb}">
+            <Setter Property="Width"
+                    Value="3" />
+            <Setter Property="Foreground"
+                    Value="Transparent" />
+            <Setter Property="Cursor"
+                    Value="SizeWE" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Foreground}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--#endregion-->
+
+        <!--#region Column Headers Base -->
+
+        <Style x:Key="ColumnHeaderStyle"
+               BasedOn="{StaticResource {x:Type DataGridColumnHeader}}"
+               TargetType="DataGridColumnHeader">
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
+                        <Grid x:Name="fullHeader"
+                              Background="{TemplateBinding Background}">
+                            <!--theme based DataGridHeaderBorder.-->
+                            <themes:DataGridHeaderBorder x:Name='HeaderBorder'
+                                                         SortDirection="{TemplateBinding SortDirection}"
+                                                         IsHovered="{TemplateBinding IsMouseOver}"
+                                                         IsPressed="{TemplateBinding IsPressed}"
+                                                         IsClickable="{TemplateBinding CanUserSort}"
+                                                         BorderThickness="0,0,1,1"
+                                                         BorderBrush="{TemplateBinding Foreground}"
+                                                         Background="Transparent"
+                                                         SeparatorVisibility="{TemplateBinding SeparatorVisibility}"
+                                                         SeparatorBrush="#FFC9CACA">
+                                <Grid Margin="0,0,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="12" />
+                                    </Grid.ColumnDefinitions>
+                                    <!--A hidden rectangle is placed to be shown when mouse hovers on the column (to highlight the column.)-->
+                                    <Rectangle x:Name="HoverRectangle"
+                                               Stretch="Fill"
+                                               Grid.ColumnSpan="2"
+                                               Fill="{Binding HoverBackground, ElementName=root}"
+                                               Opacity="0"
+                                               StrokeThickness="0" />
+
+                                    <!--Content of the header.-->
+                                    <ContentPresenter Grid.Column="0"
+                                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                      Margin="{TemplateBinding Padding}"
+                                                      Cursor="{TemplateBinding Cursor}" />
+
+                                    <!--A drop down filter button.-->
+                                    <sb:SplitButton x:Name="PART_DropDown"
+                                                    Grid.Column="0"
+                                                    ContextMenuService.IsEnabled="False"
+                                                    Grid.ColumnSpan="2"
+                                                    Mode="Dropdown"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding Foreground}"
+                                                    Foreground="{TemplateBinding Foreground}"
+                                                    Style="{StaticResource FilterButton}"
+                                                    ContextMenuStyle="{StaticResource ContextMenuStyle}"
+                                                    DataContext="{Binding Data, Source={StaticResource Proxy} }"
+                                                    Placement="Bottom"
+                                                    PreviewMouseDown="SplitButton_MouseDown"
+                                                    d:DataContext="{d:DesignInstance Type={x:Type local:CustomDataGrid}}">
+
+                                        <sb:SplitButton.Content>
+                                            <Grid Margin="1"
+                                                  Background="Transparent ">
+                                                <Border BorderThickness="1"
+                                                        IsHitTestVisible="True"
+                                                        BorderBrush="{TemplateBinding Foreground}"
+                                                        CornerRadius="2"
+                                                        Background="{TemplateBinding Background}" />
+
+                                                <!--A filter symbol-->
+                                                <Path Data="M 0, 0 L 1, 1 1 ,3 2, 3 2, 1 3, 0 Z"
+                                                      Stretch="UniformToFill"
+                                                      Width="12"
+                                                      Stroke="{TemplateBinding Foreground}"
+                                                      Fill="{TemplateBinding Foreground}"
+                                                      Margin="4" />
+
+                                            </Grid>
+                                        </sb:SplitButton.Content>
+
+                                        <!--Sort-->
+                                        <MenuItem Name="MenuItem_SortAscending"
+                                                  Header="Sort Ascending"
+                                                  Click="SortClick"
+                                                  Initialized="SortAscendingMenuItem_Initialized">
+                                            <MenuItem.Icon>
+                                                <Path Width="12"
+                                                      Fill="{TemplateBinding Foreground}"
+                                                      Stretch="Uniform"
+                                                      Data="F1 M -5.215,6.099L 5.215,6.099L 0,0L -5.215,6.099 Z" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+
+                                        <MenuItem Name="MenuItem_SortDescending"
+                                                  Header="Sort Descending"
+                                                  Click="SortClick">
+                                            <MenuItem.Icon>
+                                                <Path Width="12"
+                                                      Fill="{TemplateBinding Foreground}"
+                                                      Stretch="Uniform"
+                                                      RenderTransformOrigin="0.5,0.5"
+                                                      Data="F1 M -5.215,6.099L 5.215,6.099L 0,0L -5.215,6.099 Z">
+                                                    <Path.RenderTransform>
+                                                        <ScaleTransform ScaleY="-1" />
+                                                    </Path.RenderTransform>
+                                                </Path>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <!--Filter-->
+                                        <MenuItem x:Name="MenuItem_Filter"
+                                                  Header="Filter"
+                                                  MouseDoubleClick="FilterModeMenuItem_Click">
+                                            <MenuItem.Icon>
+                                                <Path Data="M 0, 0 L 1, 1 1 ,3 2, 3 2, 1 3, 0 Z"
+                                                      Stretch="Uniform"
+                                                      Width="12"
+                                                      Stroke="{TemplateBinding Foreground}"
+                                                      Fill="{TemplateBinding Foreground}"
+                                                      Margin="2" />
+                                            </MenuItem.Icon>
+                                            <!--View Filters-->
+                                            <MenuItem Header="ViewFilters"
+                                                      Click="FilterModeMenuItem_Click" />
+                                            <Separator />
+                                            <!--TextFilter-->
+                                            <MenuItem Header="Equals"
+                                                      Click="FilterModeMenuItem_Click" />
+                                            <MenuItem Header="NotEquals"
+                                                      Click="FilterModeMenuItem_Click" />
+                                            <MenuItem Header="BeginsWith"
+                                                      Click="FilterModeMenuItem_Click" />
+                                            <MenuItem Header="EndsWith"
+                                                      Click="FilterModeMenuItem_Click" />
+                                            <MenuItem Header="Contains"
+                                                      Click="FilterModeMenuItem_Click" />
+                                            <MenuItem Header="NotContains"
+                                                      Click="FilterModeMenuItem_Click" />
+                                            <Separator />
+                                            <!--Number Filter-->
+                                            <MenuItem Header="GreaterThan"
+                                                      Click="FilterModeMenuItem_Click"
+                                                      Visibility="{Binding IsNumericalColumn, Converter={StaticResource BoolToVis}}" />
+                                            <MenuItem Header="LessThan"
+                                                      Click="FilterModeMenuItem_Click"
+                                                      Visibility="{Binding IsNumericalColumn, Converter={StaticResource BoolToVis}}" />
+                                            <MenuItem Header="GreaterThanOrEqual"
+                                                      Click="FilterModeMenuItem_Click"
+                                                      Visibility="{Binding IsNumericalColumn, Converter={StaticResource BoolToVis}}" />
+                                            <MenuItem Header="LessThanOrEqual"
+                                                      Click="FilterModeMenuItem_Click"
+                                                      Visibility="{Binding IsNumericalColumn, Converter={StaticResource BoolToVis}}" />
+                                            <Separator Visibility="{Binding IsNumericalColumn, Converter={StaticResource BoolToVis}}" />
+                                            <!--Misc.-->
+                                            <MenuItem Header="IsNull"
+                                                      Click="FilterModeMenuItem_Click" />
+                                            <MenuItem Header="NotIsNull"
+                                                      Click="FilterModeMenuItem_Click" />
+                                        </MenuItem>
+
+                                    </sb:SplitButton>
+                                </Grid>
+                            </themes:DataGridHeaderBorder>
+                            <Thumb x:Name="PART_LeftHeaderGripper"
+                                   HorizontalAlignment="Left"
+                                   Style="{StaticResource ColumnHeaderGripperStyle}" />
+                            <Thumb x:Name="PART_RightHeaderGripper"
+                                   HorizontalAlignment="Right"
+                                   Style="{StaticResource ColumnHeaderGripperStyle}" />
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property='IsMouseOver'
+                                     SourceName="fullHeader"
+                                     Value='True'>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation BeginTime="00:00:00"
+                                                             Duration="00:00:00.20000"
+                                                             Storyboard.TargetName="HoverRectangle"
+                                                             Storyboard.TargetProperty="(UIElement.Opacity)"
+                                                             To='1.0' />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation BeginTime="00:00:00"
+                                                             Duration="00:00:00.20000"
+                                                             Storyboard.TargetName="HoverRectangle"
+                                                             Storyboard.TargetProperty="(UIElement.Opacity)"
+                                                             To='0' />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+
+        </Style>
+
+        <!--#endregion-->
+
+        <!--#region DataGridColumnHeadersPresenter-->
+
+        <!--A custom DataGridColumnHeadersPresenter is required to not display the custom ColumnHeader template as background of the datagrid header-->
+        <Style x:Key="ColumnHeadersPresenterStyle"
+               TargetType="{x:Type DataGridColumnHeadersPresenter}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridColumnHeadersPresenter}">
+                        <Grid>
+                            <!--"part_fillercolumnheader" is removed and plain rectangle is placed in its place.-->
+                            <Rectangle>
+                                <Rectangle.Fill>
+                                    <SolidColorBrush Color="{TemplateBinding Background}" />
+                                </Rectangle.Fill>
+                            </Rectangle>
+
+                            <!--Leave the item presenter in place.-->
+                            <ItemsPresenter x:Name="itemsPresenter"
+                                            Margin="6,0,0,0" />
+
+
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--#endregion-->
+        
+        <!--#endregion-->
+        
+        <!--#region Row Styles-->
+        
+        <Style x:Key="RowHeaderStyle"
+               TargetType="{x:Type DataGridRowHeader}">
+            <Setter Property="Content"
+                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type DataGrid}},Path=Columns[0].Header,Mode=OneTime}" />
+            <Setter Property="Visibility"
+                    Value="Collapsed" />
+        </Style>
+        
+        <!--#endregion-->
+
+        <!--#endregion-->
+        
+        <!--#region DataGrid Base-->
+
+        <Style x:Key="DataGridStyle"
+               TargetType="DataGrid">
+            <Setter Property="HorizontalAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalAlignment"
+                    Value="Top" />
+            <Setter Property="ColumnHeaderStyle"
+                    Value="{StaticResource ColumnHeaderStyle}" />
+            <!--<Setter Property="RowHeaderStyle"
+                    Value="{StaticResource RowHeaderStyle}" />-->
+            <Setter Property="CanUserSortColumns"
+                    Value="False" />
+            <Setter Property="CanUserAddRows"
+                    Value="False" />
+            <Setter Property="CanUserDeleteRows"
+                    Value="False" />
+            <Setter Property="IsReadOnly"
+                    Value="True" />
+            <Setter Property="CellStyle">
+                <Setter.Value>
+                    <Style TargetType="{x:Type DataGridCell}">
+                        <EventSetter Event="SizeChanged"
+                                     Handler="DataGridCell_SizeChanged" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGrid}">
+                        <Grid>
+                            <StackPanel>
+                                <DataGridColumnHeadersPresenter Name="PART_ColumnHeadersPresenter"
+                                                                Style="{StaticResource ColumnHeadersPresenterStyle}" />
+                                <!--Binding errors because of this i assume. Couldn't fix them and don't know what is the issue exactly but they seem to have no negative effect-->
+                                <ItemsPresenter />
+                            </StackPanel>
+                        </Grid>
+                    </ControlTemplate>
+
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--#endregion-->
+
+    </UserControl.Resources>
+
+    <DataGrid x:Name="BaseDataGrid"
+              VerticalAlignment="Stretch"
+              HorizontalAlignment="Stretch"
+              ItemsSource="{Binding ItemsSource}"
+              DataContext="{Binding ElementName=cstmDataGrid}"
+              Style="{StaticResource DataGridStyle}">
+    </DataGrid>
+</UserControl>
